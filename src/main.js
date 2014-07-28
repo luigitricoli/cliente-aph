@@ -17,7 +17,7 @@ function initCookies(){
 }
 
 function login(){
-	var firstForm = { MATRICULA_TXT:$("#registration").val(), "CPF_TXT":$("#cpf").val()}
+	var firstForm = { MATRICULA_TXT:$.cookie("registration"), "CPF_TXT":$.cookie("cpf")}
 
 	$.ajax({
 		cache: false,
@@ -40,7 +40,7 @@ function nextLogin(){
 		crossDomain: true,		
 		type: 'POST',
 		url:'http://aph.egs.com.br/aph/acesso_SV_3.ASP',
-		data: {ACESSO_1:$("#password").val()}
+		data: {ACESSO_1:$.cookie("password")}
 	}).done(function(data, textStatus, jqXHR) {
 		if(/Mensagem\s+do Sistema/.test(jqXHR.responseText)){
 			console.log("error on next login");
@@ -105,14 +105,7 @@ function addTaskAdmin(){
 		crossDomain: true,		
 		type: 'POST',
 		url:'http://aph.egs.com.br/aph/SALVA.asp',
-		data: task,
-		success: function(data, status, request){
-			save = false;
-			console.log("task");
-		},
-		error: function (request, status, errorThrown) {
-			console.log("Logado com error");	
-		}
+		data: task
 	});
 }
 
@@ -128,6 +121,11 @@ $(document).ready(function() {
 		$.cookie("registration", $("#registration").val(), {path : '/'});
 		$.cookie("cpf", $("#cpf").val(), {path : '/'});
 		$.cookie("password", $("#password").val(), {path : '/'});
+		window.location = "index.html"
+		event.preventDefault();
+	});	
+
+	$("#cancel").click(function(event){
 		window.location = "index.html"
 		event.preventDefault();
 	});	

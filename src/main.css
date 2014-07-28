@@ -63,6 +63,7 @@ h1{
     float: right;
     background: #363b41;
     color: #fff;
+    margin-left: 10px;
 }
 .field.buttons{
     height: 30px;
