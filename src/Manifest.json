@@ -1,12 +1,14 @@
 {
   "manifest_version": 2,
   "name": "Moody Mad Eye",
-  "description": "Aplicativo para lançamento de horas do APH EGS",
+  "description": "Extenção para lançamento de horas do APH EGS",
   "version": "0.1",
-  "app": {
-    "background": {
-      "scripts": ["background.js"]
-    }
+  "browser_action": {
+    "default_icon": "eye1-16.png",
+    "default_popup": "index.html"
   },
-  "icons": { "16": "calculator-16.png", "128": "calculator-128.png" }
+  "permissions": [
+                  "cookies",
+                  "*://aph.egs.com.br/*"
+                 ]  
 }

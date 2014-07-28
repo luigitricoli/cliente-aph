@@ -7,28 +7,36 @@
 
 }
 body{
-    width: 300px;
+}
+#head{
+    background: #363b41;
+    padding: 10px;
+    margin-bottom: 10px;
+    display:block;
 }
 h1{
-    width: 100%;
-    display:block;
-    background: #363b41;
     color: #fff;
-    padding: 10px;
     font-weight: bold;
     font-size: 16px;
 }
+#settings{
+    float: right;
+    background: transparent;
+    cursor: pointer;
+    display: block;
+}
 #container-all{
     background: #e9ecf1;
-    padding: 10px;
-    width: 100%;
+    padding: 0px 0px 10px;
+    width: 330px;
+    display: block;
 }
 #user-infos button{
     cursor: pointer;
 }
 .field{
-    padding: 10px 0px;
-    clear:both;
+    padding: 5px 0px;
+    margin: 0px 14px;
 }
 .field label{
     font-weight: bold;
@@ -42,7 +50,6 @@ h1{
 .field input, .field textarea {
     width: 190px;
     display:block;
-    float: left;
     padding: 5px;
 }
 
@@ -56,6 +63,9 @@ h1{
     float: right;
     background: #363b41;
     color: #fff;
+}
+.field.buttons{
+    height: 30px;
 }
 
 /** DEV 

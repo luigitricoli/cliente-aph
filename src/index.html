@@ -3,35 +3,30 @@
 <head>
     <script src="jquery-1.10.2.min.js"></script>
 	<script src="jquery.cookie.js"></script>
+    <script src="jquery-dateFormat.min.js"></script>
     <script src="main.js"></script>
 	<link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
-	<h1>Moody Mad Eye</h1>
     <div id="container-all">
+        <section id="head">
+            <a id="settings" href="settings.html"><img src="settings.png"></a>
+            <h1>Moody Mad Eye</h1>
+        </section>
         <section id="main">
         	<form id="user-infos">
-        		<div class="field">
-	        		<label>Matr&iacute;cula EGS</label>
-	        		<input id="registration" name="registration" type="text">        			
-        		</div>
-				<div class="field">
-					<label>CPF</label>
-        			<input id="cpf" name="cpf" type="text">
-        		</div>
-				<div class="field">
-					<label>Senha</label>
-        			<input id="password" name="password" type="password">
-        		<div>
+                <input id="registration" name="registration" type="hidden">
+        		<input id="cpf" name="cpf" type="hidden">
+        		<input id="password" name="password" type="hidden">
 				<div class="field">
 					<label>Descri&ccedil;&atilde;o</label>
-        			<textarea name="description"></textarea>
-        		<div>
+        			<textarea id="description" name="description"></textarea>
+        		</div>
 				<div class="field">
 					<label>Site</label>
-        			<textarea name="site"></textarea>
-        		<div>
-        		<div class="field">
+        			<textarea id="site" name="site"></textarea>
+        		</div>
+        		<div class="field buttons">
         			<button id="send" type="button">Provisionar</button>
         		</div>
         	</form>
