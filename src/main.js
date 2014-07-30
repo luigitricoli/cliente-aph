@@ -165,34 +165,36 @@ function addTaskAdmin(){
 	});
 }
 
-function finishDay(){
+function finishDay(successCallback){
 	$.ajax({
 		cache: false,
 		crossDomain: true,		
 		type: 'POST',
 		url:'http://aph.egs.com.br/aph/exibe_dia.asp',
 		data:{DATA: $.format.date(new Date(), 'dd/MM/yyyy')}
+	}).done(successCallback);
+}
+
+function postFinish(data, textStatus, jqXHR){
+	var response = $.parseHTML(data);
+	var table = $(response).find("table")[10];
+	var inputs = $(table).find("input");
+
+	var form = {DATABASE: $.format.date(new Date(), 'dd/MM/yyyy')};
+
+	$.each(inputs, function( index, element ) {
+		var input = $(element);
+		form[input.attr("name")]=input.val();
+	});
+
+	$.ajax({
+		cache: false,
+		crossDomain: true,		
+		type: 'POST',
+		url:'http://aph.egs.com.br/aph/FECHADIA.ASP',
+		data: form
 	}).done(function(data, textStatus, jqXHR){
-		var response = $.parseHTML(data);
-		var table = $(response).find("table")[10];
-		var inputs = $(table).find("input");
-
-		var form = {DATABASE: $.format.date(new Date(), 'dd/MM/yyyy')};
-
-		$.each(inputs, function( index, element ) {
-			var input = $(element);
-			form[input.attr("name")]=input.val();
-		});
-
-		$.ajax({
-			cache: false,
-			crossDomain: true,		
-			type: 'POST',
-			url:'http://aph.egs.com.br/aph/FECHADIA.ASP',
-			data: form
-		}).done(function(data, textStatus, jqXHR){
-			window.close();
-		});
+		window.close();
 	});
 }
 
@@ -201,7 +203,17 @@ $(document).ready(function() {
 
 	$("#send").click(function(event){
 		login(function(){
-			addTaskNormal();
+			finishDay(function(data, textStatus, jqXHR){
+				var response = $.parseHTML(data);
+				var table = $(response).find("table")[10];
+				var lines = $(table).find(".style28").text().trim();
+
+				if(5 > lines){
+					addTaskNormal();
+				} else {
+					showErrorMessage("O dia atual j&aacute; esta finalizado.");
+				}
+			});
 		});
 		event.preventDefault();
 	});
@@ -235,7 +247,7 @@ $(document).ready(function() {
 	});
 
 	$("#yes").click(function(event){
-		finishDay();
+		finishDay(postFinish);
 		event.preventDefault();
 	});
 
