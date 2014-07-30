@@ -42,8 +42,9 @@ $(document).ready(function() {
 	load();
 
 	$("#project").change(function(event){
+		var selectElement = $(this);
 		login(function(){
-			getActivities($(this).val());
+			getActivities(selectElement.val());
 		});
 		
 	});		
