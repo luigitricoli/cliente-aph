@@ -29,13 +29,16 @@ function load(){
 	});
 }
 
-function save(element, event){
+function saveLogin(element, event){
 	$.cookie("registration", $("#registration").val(), {path : '/'});
 	$.cookie("cpf", $("#cpf").val(), {path : '/'});
 	$.cookie("password", $("#password").val(), {path : '/'});
+}
+
+function save(element, event){
+	saveLogin(element, event);
 	$.cookie("project", $("#project").val(), {path : '/'});
 	$.cookie("activity", $("#activity").val(), {path : '/'});
-	redirectTo("index.html");
 }
 
 $(document).ready(function() {
@@ -43,6 +46,7 @@ $(document).ready(function() {
 
 	$("#project").change(function(event){
 		var selectElement = $(this);
+		saveLogin(this, event);
 		login(function(){
 			getActivities(selectElement.val());
 		});
@@ -51,6 +55,7 @@ $(document).ready(function() {
 
 	$("#save").click(function(event){
 		save(this, event);
+		redirectTo("index.html");
 		event.preventDefault();
 	});
 

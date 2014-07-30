@@ -26,7 +26,8 @@ function showMessage(selector, message, label){
 
 	var finalMessage = undefined === label ? "" : label;
 	finalMessage += message;
-
+	
+	notification.find("span").empty();
 	textComponent.html(finalMessage);
 	notification.show();
 }
@@ -122,6 +123,7 @@ function lastLogin(successCallback){
 	getToAph('VALIDALOGIN.ASP', 
 		function(data, textStatus, jqXHR) {
 			if(undefined !== successCallback){
+				showSuccessMessage("Login efetuado com sucesso.")
 				successCallback();	
 			}
 		});
