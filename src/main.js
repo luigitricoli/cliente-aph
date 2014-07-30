@@ -1,5 +1,6 @@
-var save = false;
 var VALID_MESSAGE = /\w.+[\w!]/;
+var APH_ERROR = /Mensagem\s+do Sistema/;
+var LINES_OPEN_DAY = 3;
 
 function initCookies(){
 	if(undefined === $.cookie("registration")){
@@ -19,96 +20,111 @@ function initCookies(){
 	}
 }
 
-function showErrorMessage(message){
-	$(".notification .error").html("APH diz: " + message)
-	$(".notification").show();
+function showMessage(selector, message, label){
+	var notification = $(".notification");
+	var textComponent = notification.find(selector);
+
+	var finalMessage = undefined === label ? "" : label;
+	finalMessage += message;
+
+	textComponent.html(finalMessage);
+	notification.show();
+}
+
+function showErrorFromAph(message){
+	showMessage(".error", message, "APH diz: ");
 }
 
 function showSuccessMessage(message){
-	$(".notification .success").html("APH diz: " + message)
-	$(".notification").show();
+	showMessage(".success", message);
 }
 
-function getMessage(data){
+function getMessage(data, message, posProcessor){
 	var response = $.parseHTML(data)
-	var messageElement = $(response).find(".style28")[1];
-	var message = $(messageElement).text();
-	return VALID_MESSAGE.test(message) ? VALID_MESSAGE.exec(message)[0] : undefined;
+	var text = message($(response));
+
+	if(undefined !== posProcessor){
+		text = posProcessor(text);
+	}
+
+	return VALID_MESSAGE.test(text) ? VALID_MESSAGE.exec(text)[0] : undefined;
 }
 
-function getActivities(projectId, successCallback){
-	var path = 'http://aph.egs.com.br/aph/ajaxat.asp?pjt=' + projectId;
+function redirectTo(path){
+	window.location = path;
+}
 
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'GET',
-		url: path
-	}).done(function(data, textStatus, jqXHR) {
-		$("#activity").empty();
-		$.each(data, function( index, activity ) {
-  			$("#activity").append('<option value="' + activity.codigo + '">' + activity.nome + '</option>');
-		});
+function closeExtension(){
+	window.close();
+}
 
-		if(undefined !== successCallback){
-			successCallback();
-		}
-	});	
+function getAphUrl(path){
+	return 'http://aph.egs.com.br/aph/' + path;
+}
+
+function postToAph(path, data, doneCallback){
+	var url = getAphUrl(path);
+	var request = {cache: false, crossDomain: true, type: 'POST', url: url};
+	if(undefined !== data){
+		request['data'] = data;
+	}
+
+	$.ajax(request).done(doneCallback);
+}
+
+function getToAph(path, doneCallback){
+	var url = getAphUrl(path);
+	var request = {cache: false, crossDomain: true, type: 'POST', url: url};
+
+	$.ajax(request).done(doneCallback);	
 }
 
 function login(successCallback){
-	var firstForm = { MATRICULA_TXT:$.cookie("registration"), "CPF_TXT":$.cookie("cpf")}
+	var firstForm = { MATRICULA_TXT:$.cookie("registration"), CPF_TXT:$.cookie("cpf")}
 
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/acesso.ASP',
-		data: firstForm
-	}).done(function(data, textStatus, jqXHR) {
-		if(/Mensagem\s+do Sistema/.test(data)){
-			var response = $.parseHTML(data)
-			var messageElement = $(response).find(".style2").children("div")[0];
-			var message = $(messageElement).html().replace(/[^\w\s!]/,"&aacute;");
-			message = /\w.+[\w!]/.exec(message)[0];
-			showErrorMessage(message);
-		} else {
-			nextLogin(successCallback);
-		}
-	});
+	postToAph('acesso.ASP', firstForm, 
+		function(data, textStatus, jqXHR){
+			if(APH_ERROR.test(data)){
+				var erro = getMessage(data, function(body){
+					var messageElement = body.find(".style2").children("div")[0];
+					return $(messageElement).html();
+				}, function(text){
+					return text.replace(/[^\w\s!]/,"&aacute;");
+				});
+
+				showErrorFromAph(erro);
+			} else {
+				nextLogin(successCallback);
+			}
+		});
 }
 
 function nextLogin(successCallback){
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/acesso_SV_3.ASP',
-		data: {ACESSO_1:$.cookie("password")}
-	}).done(function(data, textStatus, jqXHR) {
-		if(/Mensagem\s+do Sistema/.test(jqXHR.responseText)){
-			var response = $.parseHTML(data)
-			var messageElement = $(response).find(".style2").children("div")[0];
-			var message = $(messageElement).html().replace(/[^\w\s!]/,"&atilde;");
-			message = /\w.+[\w!]/.exec(message)[0];
-			showErrorMessage(message);
-		} else {
-			lastLogin(successCallback);
-		}		
-	});
+
+	postToAph('acesso_SV_3.ASP', {ACESSO_1: $.cookie("password")},
+		function(data, textStatus, jqXHR) {
+			if(APH_ERROR.test(jqXHR.responseText)){
+				var erro = getMessage(data, function(body){
+								var messageElement = body.find(".style2").children("div")[0];
+								return $(messageElement).html();
+							}, function(text){
+								return text.replace(/[^\w\s!]/,"&atilde;");
+							});
+				
+				showErrorFromAph(erro);
+			} else {
+				lastLogin(successCallback);
+			}		
+		});
 }
 
 function lastLogin(successCallback){
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'GET',
-		url:'http://aph.egs.com.br/aph/VALIDALOGIN.ASP',
-	}).done(function(data, textStatus, jqXHR) {
-		if(undefined !== successCallback){
-			successCallback();	
-		}
-	});
+	getToAph('VALIDALOGIN.ASP', 
+		function(data, textStatus, jqXHR) {
+			if(undefined !== successCallback){
+				successCallback();	
+			}
+		});
 }
 
 function Task(begin, end, project, activity, description, site){
@@ -133,49 +149,31 @@ function addTaskNormal(){
 
 	var task = new Task(begin, end, $.cookie("project"), $.cookie("activity"), $("#description").val(), $("#site").val());
 
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/SALVA.asp',
-		data: task,
-	}).done(function(data, textStatus, jqXHR){
-		var message = getMessage(data);
-		if(undefined === message){
-			window.location = "finish.html";
-			showSuccessMessage("Tarefa inserida com sucesso.");
-		} else {
-			showErrorMessage(message);
-		}
-	});
+
+	postToAph('SALVA.asp', task, 
+		function(data, textStatus, jqXHR){
+			var erro = getMessage(data, function(body){
+				var messageElement = body.find(".style28")[1];
+				return $(messageElement).text();			
+			});
+
+			if(undefined === erro){
+				redirectTo("finish.html");
+			} else {
+				showErrorFromAph(message);
+			}
+		});
 }
 
-function addTaskAdmin(){
-	var begin = $.format.date(new Date(), 'yyyy-MM-dd 17:01');
-	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:48');
-
-	var task = new Task(begin, end, 2843001012, 28, '', '');
-
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/SALVA.asp',
-		data: task
-	});
+function getDay(successCallback){
+	postToAph('exibe_dia.asp', {DATA: $.format.date(new Date(), 'dd/MM/yyyy')}, successCallback);
 }
 
-function finishDay(successCallback){
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/exibe_dia.asp',
-		data:{DATA: $.format.date(new Date(), 'dd/MM/yyyy')}
-	}).done(successCallback);
+function finishDay(){
+	getDay(finish);
 }
 
-function postFinish(data, textStatus, jqXHR){
+function finish(data, textStatus, jqXHR){
 	var response = $.parseHTML(data);
 	var table = $(response).find("table")[10];
 	var inputs = $(table).find("input");
@@ -187,14 +185,22 @@ function postFinish(data, textStatus, jqXHR){
 		form[input.attr("name")]=input.val();
 	});
 
-	$.ajax({
-		cache: false,
-		crossDomain: true,		
-		type: 'POST',
-		url:'http://aph.egs.com.br/aph/FECHADIA.ASP',
-		data: form
-	}).done(function(data, textStatus, jqXHR){
-		window.close();
+	postToAph('FECHADIA.ASP', form, 
+		function(data, textStatus, jqXHR){
+			closeExtension();
+		});
+}
+
+function checkBeforeSave(){
+	getDay(function(data, textStatus, jqXHR){
+		var response = $.parseHTML(data);
+		var finishButton = $(response).find("table").find("input[name='T']");
+
+		if(finishButton.length > 0){
+			addTaskNormal();
+		} else {
+			showErrorFromAph("O dia atual j&aacute; est&aacute; finalizado.");
+		}
 	});
 }
 
@@ -202,52 +208,17 @@ $(document).ready(function() {
 	initCookies();
 
 	$("#send").click(function(event){
-		login(function(){
-			finishDay(function(data, textStatus, jqXHR){
-				var response = $.parseHTML(data);
-				var table = $(response).find("table")[10];
-				var lines = $(table).find(".style28").text().trim();
-
-				if(5 > lines){
-					addTaskNormal();
-				} else {
-					showErrorMessage("O dia atual j&aacute; esta finalizado.");
-				}
-			});
-		});
+		login(checkBeforeSave);
 		event.preventDefault();
 	});
 
-	$("#save").click(function(event){
-		$.cookie("registration", $("#registration").val(), {path : '/'});
-		$.cookie("cpf", $("#cpf").val(), {path : '/'});
-		$.cookie("password", $("#password").val(), {path : '/'});
-		$.cookie("project", $("#project").val(), {path : '/'});
-		$.cookie("activity", $("#activity").val(), {path : '/'});
-		window.location = "index.html"
-		event.preventDefault();
-	});	
-
-	$("#cancel").click(function(event){
-		window.location = "index.html"
-		event.preventDefault();
-	});	
-
-	$("#project").change(function(event){
-		var select = $(this);
-		login(function(){
-			getActivities(select.val());	
-		});
-		
-	});	
-
 	$("#no").click(function(event){
-		window.close();
+		closeExtension();
 		event.preventDefault();
 	});
 
 	$("#yes").click(function(event){
-		finishDay(postFinish);
+		finishDay();
 		event.preventDefault();
 	});
 
