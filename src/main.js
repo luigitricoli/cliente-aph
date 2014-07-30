@@ -160,7 +160,7 @@ function addTaskNormal(){
 			if(undefined === erro){
 				redirectTo("finish.html");
 			} else {
-				showErrorFromAph(message);
+				showErrorFromAph(erro);
 			}
 		});
 }
