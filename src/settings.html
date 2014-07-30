@@ -1,10 +1,11 @@
 <!DOCTYPE HTML>
-<html>
+<html id="settings-body">
 <head>
     <script src="jquery-1.10.2.min.js"></script>
 	<script src="jquery.cookie.js"></script>
     <script src="jquery-dateFormat.min.js"></script>
     <script src="main.js"></script>
+    <script src="loadSettings.js"></script>
 	<link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
@@ -27,6 +28,24 @@
 					<label>Senha</label>
         			<input id="password" name="password" type="password">
         		</div>
+                <div class="field">
+                    <label>Projeto</label>
+                    <select id="project" name="project">
+                        <option value="4503621">(4503621)&nbsp;&nbsp;TIM - SOLUTION MANAGEMENT 2012 - 2952 - LCM</option>
+                        <option value="92329640">(92329640)&nbsp;&nbsp;TIM - W1043 - 9TH DIGIT - LCM</option>
+                        <option value="93749908">(93749908)&nbsp;&nbsp;TIM - W4070 - SW FACTORY LCM 2014</option>
+                        <option value="2843001012">(2843001012)&nbsp;&nbsp;COMMON SERVICES-EDA</option>
+                        <option value="2843006001">(2843006001)&nbsp;&nbsp;SERVICES DELIVERY - LCM</option>
+                        <option value="93050570">(93050570)&nbsp;&nbsp;OI - L3008 - FSW - ORDER MANAGEMENT - LCM</option>
+                        <option value="93187081">(93187081)&nbsp;&nbsp;TELEFONICA - T3014 - LCM</option>
+                        <option value="93471073">(93471073)&nbsp;&nbsp;DATORA - B0108 - OPERAÇÃO BILLING 2014 - LCM</option>
+                        <option value="93620666">(93620666)&nbsp;&nbsp;VIVO-T3022 - TVA APPL SOFT FACTORY - LCM</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Atividade</label>
+                    <select id="activity" name="activity"></select>
+                </div>                
         		<div class="field buttons">
                     <button id="save" type="button">Salvar</button>
                     <button id="cancel" type="button">Cancelar</button>

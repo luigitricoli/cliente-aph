@@ -47,10 +47,14 @@ h1{
     margin-right: 10px;
     padding: 5px 0px;
 }
-.field input, .field textarea {
+.field input, .field textarea, .field select{
     width: 190px;
     display:block;
     padding: 5px;
+}
+
+.field select{
+    width: 200px;
 }
 
 .field textarea {
@@ -67,6 +71,17 @@ h1{
 }
 .field.buttons{
     height: 30px;
+}
+.field.notification{
+    display: none;
+}
+.field.notification .error{
+    color: red;
+    font-weight: bold;
+}
+.field.notification .success{
+    color: green;
+    font-weight: bold;
 }
 
 /** DEV 
