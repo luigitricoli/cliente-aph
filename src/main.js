@@ -146,11 +146,32 @@ function Task(begin, end, project, activity, description, site){
 }
 
 function addTaskNormal(){
-	var begin = $.format.date(new Date(), 'yyyy-MM-dd 09:00');
-	var end = $.format.date(new Date(), 'yyyy-MM-dd 18:00');
+	var begin = $.format.date(new Date(), 'yyyy-MM-dd 08:00');
+	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:00');
 
 	var task = new Task(begin, end, $.cookie("project"), $.cookie("activity"), $("#description").val(), $("#site").val());
 
+
+	postToAph('SALVA.asp', task, 
+		function(data, textStatus, jqXHR){
+			var erro = getMessage(data, function(body){
+				var messageElement = body.find(".style28")[1];
+				return $(messageElement).text();			
+			});
+
+			if(undefined === erro){
+				redirectTo("finish.html");
+			} else {
+				showErrorFromAph(erro);
+			}
+		});
+}
+
+function addTaskAdmin(){
+	var begin = $.format.date(new Date(), 'yyyy-MM-dd 17:01');
+	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:48');
+
+	var task = new Task(begin, end, 2843001012, 28, "", "");
 
 	postToAph('SALVA.asp', task, 
 		function(data, textStatus, jqXHR){
@@ -200,6 +221,7 @@ function checkBeforeSave(){
 
 		if(finishButton.length > 0){
 			addTaskNormal();
+			addTaskAdmin();
 		} else {
 			showErrorFromAph("O dia atual j&aacute; est&aacute; finalizado.");
 		}
