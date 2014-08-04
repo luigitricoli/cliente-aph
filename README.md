@@ -1,4 +1,4 @@
-Moody Mad Eye
+Number 5
 =============
 
 This is a Chrome Extension for users of EGS APH system. This extension sends the description and site to APH system by creating a full day task from 09:00 to 18:00.
