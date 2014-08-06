@@ -41,7 +41,7 @@ function Task(begin, end, project, activity, description, site){
 	this.E_BA_1 = site;
 }
 
-function addTaskNormal(){
+function addTaskNormal(callback){
 	var begin = $.format.date(new Date(), 'yyyy-MM-dd 08:00');
 	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:00');
 
@@ -49,7 +49,7 @@ function addTaskNormal(){
 
 	aph.addTask(task)
 		.done(function(setting){
-			redirectTo("finish.html");
+			callback(setting);
 		})
 		.fail(function(setting, cause){
 			showErrorFromAph(cause);
@@ -86,25 +86,29 @@ function formPopulate(setting){
 	});
 }
 
+function loadActivities(setting){
+	aph.login()
+		.done(function(setting){
+			showSuccessMessage("Login efetuado com sucesso.");
+			aph.activities(selectElement.val(), formPopulate(setting));
+		})
+		.fail(function(setting, cause){
+			showErrorFromAph(cause);
+		});	
+}
+
 $(document).ready(function() {
 	aph.settings = settings;
 	settings.get(function(setting){
 		formPopulate(setting);
+		loadActivities(setting);
 	});
-
+ 
 	$("#project").change(function(event){
 		var selectElement = $(this);
 		var form = $(this).parents("form").serializeJSON();
 		settings.save(new Setting(form.registration, form.cpf, form.project, form.activity, form.password));
-		aph.login()
-			.done(function(setting){
-				showSuccessMessage("Login efetuado com sucesso.");
-				aph.activities(selectElement.val(), formPopulate(setting));
-			})
-			.fail(function(setting, cause){
-				showErrorFromAph(cause);
-			});
-		
+		loadActivities(setting);
 	});		
 
 	$("#save").click(function(event){
@@ -122,8 +126,7 @@ $(document).ready(function() {
 	$("#send").click(function(event){
 		aph.login()
 			.done(function(setting){
-				addTaskNormal();
-				addTaskAdmin();
+				addTaskNormal(addTaskAdmin);
 			})
 			.fail(function(setting, cause){
 				showErrorFromAph(cause);
