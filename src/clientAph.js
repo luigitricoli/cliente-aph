@@ -1,13 +1,20 @@
 var VALID_MESSAGE = /\w.+[\w!]/;
 var APH_ERROR = /Mensagem\s+do Sistema/;
-
-function addError(message){
-	var index = aph.errors.length;
-	aph.errors[index] = message;
-}
+var emptyFunction = function(){};
 
 function getAphUrl(path){
 	return 'http://aph.egs.com.br/aph/' + path;
+}
+
+function getMessage(data, message, posProcessor){
+	var response = $.parseHTML(data)
+	var text = message($(response));
+
+	if(undefined !== posProcessor){
+		text = posProcessor(text);
+	}
+
+	return VALID_MESSAGE.test(text) ? VALID_MESSAGE.exec(text)[0] : undefined;
 }
 
 function postToAph(path, data, doneCallback){
@@ -27,7 +34,7 @@ function getToAph(path, doneCallback){
 	$.ajax(request).done(doneCallback);	
 }
 
-function login(setting, successCallback){
+function login(setting){
 	var firstForm = { MATRICULA_TXT : setting.registration, 
 					  CPF_TXT : setting.cpf }
 
@@ -35,45 +42,42 @@ function login(setting, successCallback){
 		function(data, textStatus, jqXHR){
 			if(APH_ERROR.test(data)){
 				var cause = getMessage(data, function(body){
-					var messageElement = body.find(".style2").children("div")[0];
-					return $(messageElement).html();
-				}, function(text){
-					return text.replace(/[^\w\s!]/,"&aacute;");
-				});
+								var messageElement = body.find(".style2").children("div")[0];
+								return $(messageElement).html();
+							}, function(text){
+								return text.replace(/[^\w\s!]/,"&aacute;");
+							});
 
-				aph.addError(cause);
+				aph.callbackFail(setting, cause);
 			} else {
-				return nextLogin(setting, successCallback);
+				return nextLogin(setting);
 			}
 		});
 }
 
-function nextLogin(setting, successCallback){
+function nextLogin(setting){
 
 	postToAph('acesso_SV_3.ASP', {ACESSO_1: setting.password()},
 		function(data, textStatus, jqXHR) {
 			if(APH_ERROR.test(jqXHR.responseText)){
-				var erro = getMessage(data, function(body){
+				var cause = getMessage(data, function(body){
 								var messageElement = body.find(".style2").children("div")[0];
 								return $(messageElement).html();
 							}, function(text){
 								return text.replace(/[^\w\s!]/,"&atilde;");
 							});
 				
-				aph.addError(cause);
+				aph.callbackFail(setting, cause);
 			} else {
-				lastLogin(setting, successCallback);
+				lastLogin(setting);
 			}		
 		});
 }
 
-function lastLogin(setting, successCallback){
-	getToAph('VALIDALOGIN.ASP', 
-		function(data, textStatus, jqXHR) {
-			if(undefined !== successCallback){
-				successCallback(setting);	
-			}
-		});
+function lastLogin(setting){
+	getToAph('VALIDALOGIN.ASP', function(data, textStatus, jqXHR) {
+		aph.callbackDone(setting);
+	});
 }
 
 function getActivities(projectId, successCallback){
@@ -84,10 +88,6 @@ function getActivities(projectId, successCallback){
 			successCallback(data);
 		}
 	});	
-}
-
-function addTask(doneCallback){
-	postToAph('SALVA.asp', task, doneCallback);
 }
 
 function getDay(doneCallback){
@@ -116,19 +116,62 @@ function finish(data, textStatus, jqXHR){
 		});
 }
 
+function addTask(task, setting){
+	postToAph('SALVA.asp', task, function(data, textStatus, jqXHR){
+		var cause = getMessage(data, function(body){
+			var messageElement = body.find(".style28")[1];
+			return $(messageElement).text();			
+		});
+
+		if(undefined === cause){
+			aph.callbackDone(setting);
+		} else {
+			aph.callbackFail(setting, cause);
+		}
+	});
+}
+
+function beforeAddTask(task, setting){
+	aph.today(function(data, textStatus, jqXHR){
+		var response = $.parseHTML(data);
+		var finishButton = $(response).find("table").find("input[name='T']");
+
+		if(finishButton.length > 0){
+			addTask(task, setting);
+		} else {
+			aph.callbackFail(setting, "O dia atual j&aacute; est&aacute; finalizado.");
+		}
+	});
+}
+
 var aph = {
 	settings : {},
-	errors : [],
-	addError : addError,
 	get : getToAph,
 	post : postToAph,
-	login : function(callback){
+	login : function(){
 		settings.get(function(setting){
-			login(setting, callback);
+			login(setting);
 		});
+		return this;
 	},
 	activities : getActivities,
-	addTask : addTask,
+	addTask : function(task){
+		settings.get(function(setting){
+			beforeAddTask(task, setting);
+		});
+		return this;
+	},
 	today : getDay,
-	finishToday: finishDay
+	finishToday: finishDay,
+	callbackDone: emptyFunction,
+	done: function(callback){
+		this.callbackDone = callback;
+		return this;
+	},
+	callbackFail: emptyFunction,
+	fail: function(callback){
+		this.callbackFail = callback;
+		return this;
+	},	
 };
+

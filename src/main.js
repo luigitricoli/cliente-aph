@@ -1,5 +1,3 @@
-var LINES_OPEN_DAY = 3;
-
 function showMessage(selector, message, label){
 	var notification = $(".notification");
 	var textComponent = notification.find(selector);
@@ -18,17 +16,6 @@ function showErrorFromAph(message){
 
 function showSuccessMessage(message){
 	showMessage(".success", message);
-}
-
-function getMessage(data, message, posProcessor){
-	var response = $.parseHTML(data)
-	var text = message($(response));
-
-	if(undefined !== posProcessor){
-		text = posProcessor(text);
-	}
-
-	return VALID_MESSAGE.test(text) ? VALID_MESSAGE.exec(text)[0] : undefined;
 }
 
 function redirectTo(path){
@@ -52,7 +39,6 @@ function Task(begin, end, project, activity, description, site){
 	this.TOT_1 = "0,1";
 	this.E_DESC_1 = description;
 	this.E_BA_1 = site;
-
 }
 
 function addTaskNormal(){
@@ -61,17 +47,12 @@ function addTaskNormal(){
 
 	var task = new Task(begin, end, $.cookie("project"), $.cookie("activity"), $("#description").val(), $("#site").val());
 
-	aph.addTask(task, function(data, textStatus, jqXHR){
-			var erro = getMessage(data, function(body){
-				var messageElement = body.find(".style28")[1];
-				return $(messageElement).text();			
-			});
-
-			if(undefined === erro){
-				redirectTo("finish.html");
-			} else {
-				showErrorFromAph(erro);
-			}
+	aph.addTask(task)
+		.done(function(setting){
+			redirectTo("finish.html");
+		})
+		.fail(function(setting, cause){
+			showErrorFromAph(cause);
 		});
 }
 
@@ -81,32 +62,13 @@ function addTaskAdmin(){
 
 	var task = new Task(begin, end, 2843001012, 28, "", "");
 
-	aph.addTask(task, function(data, textStatus, jqXHR){
-			var erro = getMessage(data, function(body){
-				var messageElement = body.find(".style28")[1];
-				return $(messageElement).text();			
-			});
-
-			if(undefined === erro){
-				redirectTo("finish.html");
-			} else {
-				showErrorFromAph(erro);
-			}
+	aph.addTask(task)
+		.done(function(setting){
+			redirectTo("finish.html");
+		})
+		.fail(function(setting, cause){
+			showErrorFromAph(cause);
 		});
-}
-
-function checkBeforeSave(){
-	aph.today(function(data, textStatus, jqXHR){
-		var response = $.parseHTML(data);
-		var finishButton = $(response).find("table").find("input[name='T']");
-
-		if(finishButton.length > 0){
-			addTaskNormal();
-			addTaskAdmin();
-		} else {
-			showErrorFromAph("O dia atual j&aacute; est&aacute; finalizado.");
-		}
-	});
 }
 
 function formPopulate(setting){
@@ -134,9 +96,14 @@ $(document).ready(function() {
 		var selectElement = $(this);
 		var form = $(this).parents("form").serializeJSON();
 		settings.save(new Setting(form.registration, form.cpf, form.project, form.activity, form.password));
-		aph.login(function(setting){
-			aph.activities(selectElement.val(), formPopulate(setting));
-		});
+		aph.login()
+			.done(function(setting){
+				showSuccessMessage("Login efetuado com sucesso.");
+				aph.activities(selectElement.val(), formPopulate(setting));
+			})
+			.fail(function(setting, cause){
+				showErrorFromAph(cause);
+			});
 		
 	});		
 
@@ -153,7 +120,14 @@ $(document).ready(function() {
 	});
 	
 	$("#send").click(function(event){
-		aph.login(checkBeforeSave);
+		aph.login()
+			.done(function(setting){
+				addTaskNormal();
+				addTaskAdmin();
+			})
+			.fail(function(setting, cause){
+				showErrorFromAph(cause);
+			});
 		event.preventDefault();
 	});
 
