@@ -26,41 +26,11 @@ function closeExtension(){
 	window.close();
 }
 
-function Task(begin, end, project, activity, description, site){
-	this.evento = 1;
-	this.data_ini1 = begin;
-	this.data_fin1 = end;
-	this.PROJETO = project;
-	this.ATIVIDADE = activity;
-	this.ETIPO_1 = "HORARIO NORMAL";
-	this.ETOL_1 = "";
-	this.EINI_1 = begin;
-	this.EFIN_1 = end;
-	this.TOT_1 = "0,1";
-	this.E_DESC_1 = description;
-	this.E_BA_1 = site;
-}
+function addNormalTask(setting){
+	var begin = $.format.date(new Date(), 'yyyy-MM-dd 09:00');
+	var end = $.format.date(new Date(), 'yyyy-MM-dd 18:00');
 
-function addTaskNormal(callback){
-	var begin = $.format.date(new Date(), 'yyyy-MM-dd 08:00');
-	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:00');
-
-	var task = new Task(begin, end, $.cookie("project"), $.cookie("activity"), $("#description").val(), $("#site").val());
-
-	aph.addTask(task)
-		.done(function(setting){
-			callback(setting);
-		})
-		.fail(function(setting, cause){
-			showErrorFromAph(cause);
-		});
-}
-
-function addTaskAdmin(){
-	var begin = $.format.date(new Date(), 'yyyy-MM-dd 17:01');
-	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:48');
-
-	var task = new Task(begin, end, 2843001012, 28, "", "");
+	var task = new Task(begin, end, setting.project, setting.activity, $("#description").val(), $("#site").val());
 
 	aph.addTask(task)
 		.done(function(setting){
@@ -71,44 +41,49 @@ function addTaskAdmin(){
 		});
 }
 
+function selectActivityPopulate(data, setting){
+	$("#activity").empty();
+	$.each(data, function( index, activity ) {
+			$("#activity").append('<option value="' + activity.codigo + '">' + activity.nome + '</option>');
+	});
+	$( "option[value='" + setting.activity + "']" ).prop( "selected", true);
+}
+
 function formPopulate(setting){
 	$("#registration").val(setting.registration);
 	$("#cpf").val(setting.cpf);
 	$("#password").val(setting.password());
 
 	$( "option[value='" + setting.project + "']" ).prop( "selected", true);
-	aph.activities(setting.project, function(data){
-		$("#activity").empty();
-		$.each(data, function( index, activity ) {
-  			$("#activity").append('<option value="' + activity.codigo + '">' + activity.nome + '</option>');
-		});
-		$( "option[value='" + setting.activity + "']" ).prop( "selected", true);
-	});
+	loadActivities();
+	
 }
 
-function loadActivities(setting){
+function loadActivities(showMsg){
 	aph.login()
 		.done(function(setting){
-			showSuccessMessage("Login efetuado com sucesso.");
-			aph.activities(selectElement.val(), formPopulate(setting));
+			if(showMsg){
+				showSuccessMessage("Login efetuado com sucesso.");	
+			}
+			aph.activities($("#project").val(), function(data){
+				selectActivityPopulate(data, setting);
+			});
 		})
 		.fail(function(setting, cause){
 			showErrorFromAph(cause);
-		});	
+		});
 }
 
 $(document).ready(function() {
 	aph.settings = settings;
 	settings.get(function(setting){
 		formPopulate(setting);
-		loadActivities(setting);
 	});
  
 	$("#project").change(function(event){
-		var selectElement = $(this);
 		var form = $(this).parents("form").serializeJSON();
 		settings.save(new Setting(form.registration, form.cpf, form.project, form.activity, form.password));
-		loadActivities(setting);
+		loadActivities(true);
 	});		
 
 	$("#save").click(function(event){
@@ -126,7 +101,7 @@ $(document).ready(function() {
 	$("#send").click(function(event){
 		aph.login()
 			.done(function(setting){
-				addTaskNormal(addTaskAdmin);
+				addNormalTask(setting);
 			})
 			.fail(function(setting, cause){
 				showErrorFromAph(cause);

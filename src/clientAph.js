@@ -116,6 +116,50 @@ function finish(data, textStatus, jqXHR){
 		});
 }
 
+function Task(begin, end, project, activity, description, site){
+	this.evento = 1;
+	this.data_ini1 = begin;
+	this.data_fin1 = end;
+	this.PROJETO = project;
+	this.ATIVIDADE = activity;
+	this.ETIPO_1 = "HORARIO NORMAL";
+	this.ETOL_1 = "";
+	this.EINI_1 = begin;
+	this.EFIN_1 = end;
+	this.TOT_1 = "0,1";
+	this.E_DESC_1 = description;
+	this.E_BA_1 = site;
+}
+
+function beforeAddTask(task, setting){
+	aph.today(function(data, textStatus, jqXHR){
+		var response = $.parseHTML(data);
+		var finishButton = $(response).find("table").find("input[name='T']");
+		var beginTime = $(response).find("table").find("input[name='EVE_INI_2']").val();
+		var endTime = $(response).find("table").find("input[name='EVE_FIN_2']").val();
+
+		if(finishButton.length > 0){
+			if(/08:00$/.test(beginTime) && /17:48$/.test(endTime)){
+				task = addAdminTask(setting);
+			}
+			addTask(task, setting);
+		} else {
+			aph.callbackFail(setting, "O dia atual j&aacute; est&aacute; finalizado.");
+		}
+	});
+}
+
+function addAdminTask(baseTask, setting){
+	var begin = $.format.date(new Date(), 'yyyy-MM-dd 17:01');
+	var end = $.format.date(new Date(), 'yyyy-MM-dd 17:48');
+	var task = new Task(begin, end, 2843001012, 28, "", "");
+	addTask(task,setting);
+
+	newBegin = task.data_ini1.replace(/[0-9]{2}:[0-9]{2}$/, "08:00")
+	newEnd = task.data_fin1.replace(/[0-9]{2}:[0-9]{2}$/, "17:00")
+	return new Task(begin, end, baseTask.PROJETO, baseTask.ATIVIDADE, baseTask.E_DESC_1, baseTask.E_BA_1);
+}
+
 function addTask(task, setting){
 	postToAph('SALVA.asp', task, function(data, textStatus, jqXHR){
 		var cause = getMessage(data, function(body){
@@ -127,19 +171,6 @@ function addTask(task, setting){
 			aph.callbackDone(setting);
 		} else {
 			aph.callbackFail(setting, cause);
-		}
-	});
-}
-
-function beforeAddTask(task, setting){
-	aph.today(function(data, textStatus, jqXHR){
-		var response = $.parseHTML(data);
-		var finishButton = $(response).find("table").find("input[name='T']");
-
-		if(finishButton.length > 0){
-			addTask(task, setting);
-		} else {
-			aph.callbackFail(setting, "O dia atual j&aacute; est&aacute; finalizado.");
 		}
 	});
 }
